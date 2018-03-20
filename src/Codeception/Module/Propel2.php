@@ -8,6 +8,7 @@ use Codeception\TestInterface;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\Connection\ConnectionInterface;
+use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Propel;
 
 /**
@@ -71,14 +72,24 @@ class Propel2 extends Module implements ActiveRecord
     }
 
     /**
-     * @param       $entity
-     * @param array $data
+     * @param        $entity
+     * @param array  $data
+     *
+     * @param string $keyType
      *
      * @return ActiveRecordInterface|null
      */
-    public function grabRecord($entity, $data = [])
+    public function grabRecord($entity, $data = [], $keyType = TableMap::TYPE_PHPNAME)
     {
-        $query = $this->buildQuery($entity, $data);
+        $queryClass = $entity . 'Query';
+
+        /** @var ModelCriteria $query */
+        $query = new $queryClass;
+        foreach ($data as $property => $value) {
+            $filterByProperty = 'filterBy' . TableMap::translateFieldnameForClass($entity, $property, $keyType,
+                    TableMap::TYPE_PHPNAME);
+            $query->$filterByProperty($value);
+        }
 
         return $query->findOne($this->connection);
     }
@@ -87,20 +98,18 @@ class Propel2 extends Module implements ActiveRecord
      * @param string $entity
      * @param array  $data
      *
-     * @return ActiveRecordInterface
-     * @throws \Propel\Runtime\Exception\PropelException
+     * @param string $keyType
+     *
+     * @return ActiveRecordInterface|object
      */
-    public function haveRecord($entity, $data = [])
+    public function haveRecord($entity, $data = [], $keyType = TableMap::TYPE_PHPNAME)
     {
-        $query = $this->buildQuery($entity, $data);
+        /** @var object $record */
+        $record = new $entity;
+        $record->fromArray($data);
+        $record->save();
 
-        $activeRecord = $query->findOneOrCreate($this->connection);
-
-        if ($activeRecord->isNew()) {
-            $activeRecord->save();
-        }
-
-        return $activeRecord;
+        return $record;
     }
 
     /**
@@ -110,27 +119,7 @@ class Propel2 extends Module implements ActiveRecord
     public function seeRecord($entity, $data = [])
     {
         $record = $this->grabRecord($entity, $data);
-        $this->assertNotNull($record);
+        $this->assertInstanceOf(ActiveRecordInterface::class, $record);
     }
 
-    /**
-     * @param       $entity
-     * @param array $data
-     *
-     * @return ModelCriteria
-     */
-    private function buildQuery($entity, $data = [])
-    {
-        $tableMap   = $entity::TABLE_MAP;
-        $tableName  = $tableMap::TABLE_NAME;
-        $queryClass = $entity . 'Query';
-
-        /** @var ModelCriteria $query */
-        $query = new $queryClass();
-        foreach ($data as $property => $value) {
-            $query->where("$tableName.$property" . ' = ?', $value);
-        }
-
-        return $query;
-    }
 }

@@ -14,5 +14,15 @@
     "require-dev": {
         "codeception/codeception": "^2.4",
         "propel/propel": "~2.0@dev"
+    },
+  "autoload": {
+    "psr-4": {
+      "Wollanup\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
     }
 }
