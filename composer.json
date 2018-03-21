@@ -2,7 +2,7 @@
     "name": "wollanup/codeception-propel2",
     "description": "This module provides integration with [Propel2](http://propelorm.org) ORM.",
     "type": "library",
-    "license": "Apache License 2.0",
+  "license": "Apache-2.0",
     "authors": [
         {
             "name": "Steve Mareigner",
