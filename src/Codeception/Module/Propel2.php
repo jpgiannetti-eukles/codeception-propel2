@@ -98,15 +98,17 @@ class Propel2 extends Module implements ActiveRecord
      * @param string $entity
      * @param array  $data
      *
-     * @param string $keyType
-     *
      * @return ActiveRecordInterface|object
      */
-    public function haveRecord($entity, $data = [], $keyType = TableMap::TYPE_PHPNAME)
+    public function haveRecord($entity, $data = [])
     {
         /** @var object $record */
         $record = new $entity;
-        $record->fromArray($data);
+        foreach ($data as $property => $value) {
+            $property = ucfirst($property);
+            $setter = "set" . $property;
+            $record->{$setter}($value);
+        }
         $record->save();
 
         return $record;
